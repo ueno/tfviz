@@ -17,6 +17,7 @@ class Visualizer(object):
         """Link conversation with visualizer"""
         self.conversation = conversation
         self.diagram_lines = []
+        self.tcp_buffering_active = False
 
     @staticmethod
     def _format_extensions(node):
@@ -62,6 +63,7 @@ class Visualizer(object):
     def generate(self):
         """Generate Mermaid sequence diagram from conversation"""
         self.diagram_lines = []
+        self.tcp_buffering_active = False
         self.diagram_lines.append("sequenceDiagram")
         self.diagram_lines.append("    participant Client")
         self.diagram_lines.append("    participant Server")
@@ -75,7 +77,17 @@ class Visualizer(object):
                 self.diagram_lines.append("    loop")
 
                 if node.is_command():
-                    command_desc = self._describe_command(node)
+                    command_result = self._describe_command(node)
+                    command_desc, command_type = command_result
+
+                    if command_type == 'tcp_buffering_enable':
+                        self.diagram_lines.append("        activate Client")
+                        self.tcp_buffering_active = True
+                    elif command_type == 'tcp_buffering_disable':
+                        if self.tcp_buffering_active:
+                            self.diagram_lines.append("        deactivate Client")
+                            self.tcp_buffering_active = False
+
                     if command_desc:
                         self.diagram_lines.append(f"        Note over Client: {command_desc}")
                 elif node.is_expect():
@@ -99,7 +111,17 @@ class Visualizer(object):
             if node.is_command():
                 # Commands are internal operations, usually not shown
                 # but we can show Connect and Close operations
-                command_desc = self._describe_command(node)
+                command_result = self._describe_command(node)
+                command_desc, command_type = command_result
+
+                if command_type == 'tcp_buffering_enable':
+                    self.diagram_lines.append("    activate Client")
+                    self.tcp_buffering_active = True
+                elif command_type == 'tcp_buffering_disable':
+                    if self.tcp_buffering_active:
+                        self.diagram_lines.append("    deactivate Client")
+                        self.tcp_buffering_active = False
+
                 if command_desc:
                     self.diagram_lines.append(f"    Note over Client: {command_desc}")
                 node = node.child
@@ -133,19 +155,31 @@ class Visualizer(object):
         return "\n".join(self.diagram_lines)
 
     def _describe_command(self, node):
-        """Generate description for a command node"""
+        """Generate description for a command node
+
+        Returns a tuple: (description, command_type)
+        - description: String to display, or None to skip
+        - command_type: 'tcp_buffering_enable', 'tcp_buffering_flush',
+                       'tcp_buffering_disable', or None
+        """
         class_name = node.__class__.__name__
 
         if class_name == "Connect":
-            return f"Connect to {node.hostname}:{node.port}"
+            return (f"Connect to {node.hostname}:{node.port}", None)
         elif class_name == "Close":
-            return "Close connection"
+            return ("Close connection", None)
         elif class_name == "ResetHandshakeHashes":
-            return "Reset handshake hashes"
+            return ("Reset handshake hashes", None)
         elif class_name == "SetRecordVersion":
-            return f"Set record version to {node.version}"
+            return (f"Set record version to {node.version}", None)
+        elif class_name == "TCPBufferingEnable":
+            return (None, 'tcp_buffering_enable')
+        elif class_name == "TCPBufferingFlush":
+            return ("Flush buffered data", 'tcp_buffering_flush')
+        elif class_name == "TCPBufferingDisable":
+            return (None, 'tcp_buffering_disable')
         # Most other commands are internal state changes, don't show them
-        return None
+        return (None, None)
 
     def _describe_expect(self, node):
         """Generate description for an expect node"""
