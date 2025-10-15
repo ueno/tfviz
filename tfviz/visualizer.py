@@ -105,8 +105,8 @@ class Visualizer(object):
                         self._add_extension_note(node, sender="Client", indent="        ")
 
                 self.diagram_lines.append("    end")
-                # Break out of the loop since we've hit a cycle
-                break
+                node = node.next_sibling
+                continue
 
             if node.is_command():
                 # Commands are internal operations, usually not shown

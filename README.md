@@ -38,11 +38,14 @@ sequenceDiagram
     loop
         Server->>Client: NewSessionTicket
     end
+    Server->>Client: ApplicationData
+    Client->>Server: Alert(warning, close_notify)
+    Server->>Client: Alert
 ------------------------------------------------------------
 OK
 ```
 
-The rendered version is [here](https://mermaid.live/edit#pako:eNrVU01v2zAM_SuGzlnm-GOOhSLA4HbYqYdm2GEwEGgybQuVJU2it3pB_vvk2CmCZkHO1Ul8fOR7pKA94boCQomDXz0oDveCNZZ1pQr8Mcyi4MIwhUEhBSi8xLdgf4Od8EeNEGgfzmwaFFop4BigDqTmTLbaIU2SOJ4KJtqHzWbqQmfgK0ipz1pKqDHQ9WvXZxh2rmUW7n7ajxvXG6MtQrXzLZzQyr2BG6t7M4OiUQx7CzsmG20Ftt31xI6DnSee_HmjJwtHi0-AdngaN-fwzK4VTXv0e5rqlt_3voyiZaqBQpgW7NYAv0KbgLN5LhgPitvBeJsPLwjqbDeXkt6NqAVnCLcZ38GKerjC-yKUcC1UVx7hRvqzMXLU8FbvGbKJJbU20-2_io_wZwtunO6b4M8wbxWU1yAL0lhREYq2hwXpwHZsDMl-JJUEW-igJNRfK6hZL7EkpTr4Mv8Zf2jdnSr9KzctoTWTzke9qfwa5r_9SvGKYAvdKyQ0PXYgdE9eCI3DaJmmYRSv8jhO8zjz2YHQKF6u12GSZXmYRlmcxOvDgvw9iq6WYZKv1skqD8N1loSfosM_IhN_7Q).
+The rendered version is [here](https://mermaid.live/edit#pako:eNrVVMtu2zAQ_BWBpxZQ3FiSX0RhIHBS9NIc4qKHQoDBSCuJCEWyS6qJavjfQ4lyYMQRfC5P5OxwdnZJ7J5kKgdCiYE_DcgMbjkrkdWpDNzSDC3PuGbSBhvBQdpzfAv4F9Dj98pCoNxxYNNgo6SEzAZWBUJlTFTKWJokcewveNrVeu1V6AB8ByHUiaSAwgaqeFN9gnZnKobw9RG_rE2jtUIL-c5JGK6keQeXqBo9gLyUzDYIOyZKhdxW9XhglwEOFXt_zujRQm_xASy2D13njD2xi7yser_Hqi75_d-bsamYLGHDdQW41ZCN0DxwUs8Z405m2Gpn8-7FgjzpzXlK54YXPGMWLjN-AfKiHeF945KbCvKRR7gQvtFadDmc1VtmmWcJpbTffZjxHp63YLrqfvLsCYaugsxHHH6Y49yJcAV_emYouSzDIBPKwE4q14P285iw6N-UhKREnhNqsYGQ1IA1645k391Lia2ghpRQt82hYI2wKQl9yOnDjXDfxYe7v5mSVB6cpJsOv5Wqj6ru25UVoQUTxp0anbt3GYbNG4quB4Ab1UhL6DRa9CKE7skLoXEUTaJkPl_Es2W8WiZJSFpCr5JFNJnHsziZJbNlBx9C8q9PO53Ml9fTxXQ1X10vllHi1CDnVuEPP_H6wXd4Be9et6M).
 
 ## License
 
