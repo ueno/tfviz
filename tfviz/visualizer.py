@@ -49,6 +49,31 @@ class Visualizer(object):
         # Walk through the conversation tree
         node = self.conversation
         while node is not None:
+            # Check for cycle: node.child == node
+            if node.child == node:
+                # We have a cycle - process this node once inside a loop block
+                self.diagram_lines.append("    loop")
+
+                if node.is_command():
+                    command_desc = self._describe_command(node)
+                    if command_desc:
+                        self.diagram_lines.append(f"        Note over Client: {command_desc}")
+                elif node.is_expect():
+                    expect_desc = self._describe_expect(node)
+                    if expect_desc:
+                        if isinstance(node, ExpectClose):
+                            self.diagram_lines.append(f"        Server-->>Client: {expect_desc}")
+                        elif not isinstance(node, ExpectNoMessage):
+                            self.diagram_lines.append(f"        Server->>Client: {expect_desc}")
+                elif node.is_generator():
+                    gen_desc = self._describe_generator(node)
+                    if gen_desc:
+                        self.diagram_lines.append(f"        Client->>Server: {gen_desc}")
+
+                self.diagram_lines.append("    end")
+                # Break out of the loop since we've hit a cycle
+                break
+
             if node.is_command():
                 # Commands are internal operations, usually not shown
                 # but we can show Connect and Close operations
@@ -66,10 +91,7 @@ class Visualizer(object):
                         self.diagram_lines.append(f"    Server-->>Client: {expect_desc}")
                     elif not isinstance(node, ExpectNoMessage):
                         self.diagram_lines.append(f"    Server->>Client: {expect_desc}")
-                if node.child is node:
-                    node = None
-                else:
-                    node = node.child
+                node = node.child
                 continue
 
             elif node.is_generator():
