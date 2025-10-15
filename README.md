@@ -21,9 +21,12 @@ sequenceDiagram
     participant Client
     participant Server
     Note over Client: Connect to localhost:4433
-    Client->>Server: ClientHello [key_share, supported_versions, supported_groups, signature_algorithms, signature_algorithms_cert]
-    Server->>Client: HelloRetryRequest [key_share, supported_versions]
-    Client->>Server: ClientHello [key_share, supported_versions, supported_groups, signature_algorithms, signature_algorithms_cert]
+    Client->>Server: ClientHello
+    Note left of Client: key_share<br/>supported_versions<br/>supported_groups<br/>signature_algorithms<br/>signature_algorithms_cert
+    Server->>Client: HelloRetryRequest
+    Note right of Server: key_share<br/>supported_versions
+    Client->>Server: ClientHello
+    Note left of Client: key_share<br/>supported_versions<br/>supported_groups<br/>signature_algorithms<br/>signature_algorithms_cert
     Server->>Client: ChangeCipherSpec
     Server->>Client: ServerHello
     Server->>Client: EncryptedExtensions
@@ -32,12 +35,14 @@ sequenceDiagram
     Server->>Client: Finished
     Client->>Server: Finished
     Client->>Server: ApplicationData
-    Server->>Client: NewSessionTicket
+    loop
+        Server->>Client: NewSessionTicket
+    end
 ------------------------------------------------------------
 OK
 ```
 
-The rendered version is [here](https://mermaid.live/edit#pako:eNrNU8FunDAQ_RU0Z7qC4s2CD5EikqqnHLJVDy3RyjKzYAVs1x7a0NX-ew1sqkoV2mt88jy_mfdmbJ9AmhqBg8cfA2qJ90o0TvSVjsKywpGSygpNUdkp1PQ_vkf3E92CPxrCyITwwuZRabRGSRGZqDNSdK3xxBnLsiVhoX24vV2q8AvwGbvORN9fcDz4VjiMIz9YaxxhfQg0r4z2_2KNM4OdENVoQYPDg-ga4xS1_Qp6kOjoeTGxaAcTb6Zn-SckNz5NU_F0xcrze26mbIVusFS2Rbe3KFdoCzB7XWE8aOlGGxw-vBLq2faaZLCjjkoKwuuMr-jUcVzhfVJa-RbrlQFfOb6ztps0gtV7QWJF4xF_7dFP_XxR8gXDE4cYGqdq4OQGjKFH14sphNNUogJqsccKeNjWeBRDRxVU-hzSwo_4Zkz_lhlusmmBH0XnQzTYOvR7-WB_UYe6RleaQRPwdDfXAH6CV-Afi5tNmmV5WmzzJNnlaQwjcJZsWLbbpiljLCnS_BzD71kz2eQ7VkwruSm2LE2K8x-hhle-).
+The rendered version is [here](https://mermaid.live/edit#pako:eNrVU01v2zAM_SuGzlnm-GOOhSLA4HbYqYdm2GEwEGgybQuVJU2it3pB_vvk2CmCZkHO1Ul8fOR7pKA94boCQomDXz0oDveCNZZ1pQr8Mcyi4MIwhUEhBSi8xLdgf4Od8EeNEGgfzmwaFFop4BigDqTmTLbaIU2SOJ4KJtqHzWbqQmfgK0ipz1pKqDHQ9WvXZxh2rmUW7n7ajxvXG6MtQrXzLZzQyr2BG6t7M4OiUQx7CzsmG20Ftt31xI6DnSee_HmjJwtHi0-AdngaN-fwzK4VTXv0e5rqlt_3voyiZaqBQpgW7NYAv0KbgLN5LhgPitvBeJsPLwjqbDeXkt6NqAVnCLcZ38GKerjC-yKUcC1UVx7hRvqzMXLU8FbvGbKJJbU20-2_io_wZwtunO6b4M8wbxWU1yAL0lhREYq2hwXpwHZsDMl-JJUEW-igJNRfK6hZL7EkpTr4Mv8Zf2jdnSr9KzctoTWTzke9qfwa5r_9SvGKYAvdKyQ0PXYgdE9eCI3DaJmmYRSv8jhO8zjz2YHQKF6u12GSZXmYRlmcxOvDgvw9iq6WYZKv1skqD8N1loSfosM_IhN_7Q).
 
 ## License
 
