@@ -20,7 +20,10 @@ class Visualizer(object):
 
     @staticmethod
     def _format_extensions(node):
-        """Format extensions list from a node if available."""
+        """Format extensions list from a node if available.
+
+        Returns a list of extension names, or None if no extensions.
+        """
         if not hasattr(node, 'extensions') or not node.extensions:
             return None
 
@@ -36,8 +39,25 @@ class Visualizer(object):
             return None
 
         if ext_list:
-            return " [" + ", ".join(ext_list) + "]"
+            return ext_list
         return None
+
+    def _add_extension_note(self, node, sender="Client", indent="    "):
+        """Add a note box with extensions if the node has any.
+
+        Args:
+            node: The node to check for extensions
+            sender: The sender of the message ("Client" or "Server")
+            indent: Indentation string to use (default "    " for normal, "        " for loop)
+        """
+        ext_list = self._format_extensions(node)
+        if ext_list:
+            ext_text = "<br/>".join(ext_list)
+            if sender == "Client":
+                position = "left of Client"
+            else:
+                position = "right of Server"
+            self.diagram_lines.append(f"{indent}Note {position}: {ext_text}")
 
     def generate(self):
         """Generate Mermaid sequence diagram from conversation"""
@@ -65,10 +85,12 @@ class Visualizer(object):
                             self.diagram_lines.append(f"        Server-->>Client: {expect_desc}")
                         elif not isinstance(node, ExpectNoMessage):
                             self.diagram_lines.append(f"        Server->>Client: {expect_desc}")
+                        self._add_extension_note(node, sender="Server", indent="        ")
                 elif node.is_generator():
                     gen_desc = self._describe_generator(node)
                     if gen_desc:
                         self.diagram_lines.append(f"        Client->>Server: {gen_desc}")
+                        self._add_extension_note(node, sender="Client", indent="        ")
 
                 self.diagram_lines.append("    end")
                 # Break out of the loop since we've hit a cycle
@@ -91,6 +113,7 @@ class Visualizer(object):
                         self.diagram_lines.append(f"    Server-->>Client: {expect_desc}")
                     elif not isinstance(node, ExpectNoMessage):
                         self.diagram_lines.append(f"    Server->>Client: {expect_desc}")
+                    self._add_extension_note(node, sender="Server")
                 node = node.child
                 continue
 
@@ -99,6 +122,7 @@ class Visualizer(object):
                 gen_desc = self._describe_generator(node)
                 if gen_desc:
                     self.diagram_lines.append(f"    Client->>Server: {gen_desc}")
+                    self._add_extension_note(node, sender="Client")
                 node = node.child
                 continue
             else:
@@ -153,19 +177,11 @@ class Visualizer(object):
 
         # For handshake messages
         if class_name == "ExpectServerHello":
-            result = "ServerHello"
-            ext = self._format_extensions(node)
-            if ext:
-                result += ext
-            return result
+            return "ServerHello"
         elif class_name == "ExpectServerHello2":
             return "ServerHello (SSLv2)"
         elif class_name == "ExpectHelloRetryRequest":
-            result = "HelloRetryRequest"
-            ext = self._format_extensions(node)
-            if ext:
-                result += ext
-            return result
+            return "HelloRetryRequest"
         elif class_name == "ExpectCertificate":
             return "Certificate"
         elif class_name == "ExpectCompressedCertificate":
@@ -175,11 +191,7 @@ class Visualizer(object):
         elif class_name == "ExpectServerKeyExchange":
             return "ServerKeyExchange"
         elif class_name == "ExpectCertificateRequest":
-            result = "CertificateRequest"
-            ext = self._format_extensions(node)
-            if ext:
-                result += ext
-            return result
+            return "CertificateRequest"
         elif class_name == "ExpectServerHelloDone":
             return "ServerHelloDone"
         elif class_name == "ExpectChangeCipherSpec":
@@ -187,11 +199,7 @@ class Visualizer(object):
         elif class_name == "ExpectFinished":
             return "Finished"
         elif class_name == "ExpectEncryptedExtensions":
-            result = "EncryptedExtensions"
-            ext = self._format_extensions(node)
-            if ext:
-                result += ext
-            return result
+            return "EncryptedExtensions"
         elif class_name == "ExpectNewSessionTicket":
             return "NewSessionTicket"
         elif class_name == "ExpectHelloRequest":
@@ -219,11 +227,7 @@ class Visualizer(object):
         class_name = node.__class__.__name__
 
         if class_name == "ClientHelloGenerator":
-            result = "ClientHello"
-            ext = self._format_extensions(node)
-            if ext:
-                result += ext
-            return result
+            return "ClientHello"
         elif class_name == "ClientKeyExchangeGenerator":
             return "ClientKeyExchange"
         elif class_name == "ClientMasterKeyGenerator":
