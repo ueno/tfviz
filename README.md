@@ -15,6 +15,8 @@ $ PYTHONPATH=.:tlsfuzzer:tlslite-ng python visualize.py <tlsfuzzer-script-path> 
 
 ```console
 $ python visualize.py -o out.mermaid tlsfuzzer/scripts/test-tls13-obsolete-curves.py "sanity - HRR support"
+```
+
 ```mermaid
 sequenceDiagram
     participant Client
