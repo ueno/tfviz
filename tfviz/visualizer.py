@@ -10,6 +10,8 @@ from tlsfuzzer.expect import ExpectClose, ExpectNoMessage, ExpectAlert
 from tlsfuzzer.runner import guess_response
 
 
+INDENT = "    "
+
 class Visualizer(object):
     """Generate Mermaid sequence diagram from a conversation"""
 
@@ -43,13 +45,13 @@ class Visualizer(object):
             return ext_list
         return None
 
-    def _add_extension_note(self, node, sender="Client", indent="    "):
+    def _add_extension_note(self, node, sender="Client", depth=0):
         """Add a note box with extensions if the node has any.
 
         Args:
             node: The node to check for extensions
             sender: The sender of the message ("Client" or "Server")
-            indent: Indentation string to use (default "    " for normal, "        " for loop)
+            depth: Indentation depth
         """
         ext_list = self._format_extensions(node)
         if ext_list:
@@ -58,7 +60,74 @@ class Visualizer(object):
                 position = "left of Client"
             else:
                 position = "right of Server"
-            self.diagram_lines.append(f"{indent}Note {position}: {ext_text}")
+            self.diagram_lines.append(f"{INDENT*depth}Note {position}: {ext_text}")
+
+    def draw_node(self, node, depth):
+        if node.is_command():
+            # Commands are internal operations, usually not shown
+            # but we can show Connect and Close operations
+            command_result = self._describe_command(node)
+            command_desc, command_type = command_result
+
+            if command_type == 'tcp_buffering_enable':
+                self.diagram_lines.append(f"{INDENT*depth}activate Client")
+                self.tcp_buffering_active = True
+            elif command_type == 'tcp_buffering_disable':
+                if self.tcp_buffering_active:
+                    self.diagram_lines.append(f"{INDENT*depth}deactivate Client")
+                    self.tcp_buffering_active = False
+
+            if command_desc:
+                self.diagram_lines.append(f"{INDENT*depth}Note over Client: {command_desc}")
+
+        elif node.is_expect():
+            # This is an expectation of receiving a message from server
+            expect_desc = self._describe_expect(node)
+            if expect_desc:
+                if isinstance(node, ExpectClose):
+                    self.diagram_lines.append(f"{INDENT*depth}Server-->>Client: {expect_desc}")
+                elif not isinstance(node, ExpectNoMessage):
+                    self.diagram_lines.append(f"{INDENT*depth}Server->>Client: {expect_desc}")
+                self._add_extension_note(node, sender="Server")
+
+        elif node.is_generator():
+            # This is a message generator - client sending to server
+            gen_desc = self._describe_generator(node)
+            if gen_desc:
+                self.diagram_lines.append(f"{INDENT*depth}Client->>Server: {gen_desc}")
+            self._add_extension_note(node, sender="Client")
+
+        else:
+            # Unknown node type, skip it
+            pass
+
+
+    def walk(self, node, depth):
+        while node is not None:
+            if node.child == node:
+                self.diagram_lines.append(f"{INDENT*depth}loop")
+                self.draw_node(node, depth + 1)
+                self.diagram_lines.append(f"{INDENT*depth}end")
+                node = node.next_sibling
+                continue
+
+            elif node.next_sibling is not None:
+                self.diagram_lines.append(f"{INDENT*depth}alt")
+                sibling = node.next_sibling
+                while sibling is not None:
+                    next_sibling = sibling.next_sibling
+                    sibling.next_sibling = None
+                    self.walk(sibling, depth + 1)
+                    if next_sibling:
+                        self.diagram_lines.append(f"{INDENT*depth}else")
+                    sibling = next_sibling
+                self.diagram_lines.append(f"{INDENT*depth}end")
+
+            else:
+                self.draw_node(node, depth)
+
+            node = node.child
+                
 
     def generate(self):
         """Generate Mermaid sequence diagram from conversation"""
@@ -70,87 +139,7 @@ class Visualizer(object):
 
         # Walk through the conversation tree
         node = self.conversation
-        while node is not None:
-            # Check for cycle: node.child == node
-            if node.child == node:
-                # We have a cycle - process this node once inside a loop block
-                self.diagram_lines.append("    loop")
-
-                if node.is_command():
-                    command_result = self._describe_command(node)
-                    command_desc, command_type = command_result
-
-                    if command_type == 'tcp_buffering_enable':
-                        self.diagram_lines.append("        activate Client")
-                        self.tcp_buffering_active = True
-                    elif command_type == 'tcp_buffering_disable':
-                        if self.tcp_buffering_active:
-                            self.diagram_lines.append("        deactivate Client")
-                            self.tcp_buffering_active = False
-
-                    if command_desc:
-                        self.diagram_lines.append(f"        Note over Client: {command_desc}")
-                elif node.is_expect():
-                    expect_desc = self._describe_expect(node)
-                    if expect_desc:
-                        if isinstance(node, ExpectClose):
-                            self.diagram_lines.append(f"        Server-->>Client: {expect_desc}")
-                        elif not isinstance(node, ExpectNoMessage):
-                            self.diagram_lines.append(f"        Server->>Client: {expect_desc}")
-                        self._add_extension_note(node, sender="Server", indent="        ")
-                elif node.is_generator():
-                    gen_desc = self._describe_generator(node)
-                    if gen_desc:
-                        self.diagram_lines.append(f"        Client->>Server: {gen_desc}")
-                        self._add_extension_note(node, sender="Client", indent="        ")
-
-                self.diagram_lines.append("    end")
-                node = node.next_sibling
-                continue
-
-            if node.is_command():
-                # Commands are internal operations, usually not shown
-                # but we can show Connect and Close operations
-                command_result = self._describe_command(node)
-                command_desc, command_type = command_result
-
-                if command_type == 'tcp_buffering_enable':
-                    self.diagram_lines.append("    activate Client")
-                    self.tcp_buffering_active = True
-                elif command_type == 'tcp_buffering_disable':
-                    if self.tcp_buffering_active:
-                        self.diagram_lines.append("    deactivate Client")
-                        self.tcp_buffering_active = False
-
-                if command_desc:
-                    self.diagram_lines.append(f"    Note over Client: {command_desc}")
-                node = node.child
-                continue
-
-            elif node.is_expect():
-                # This is an expectation of receiving a message from server
-                expect_desc = self._describe_expect(node)
-                if expect_desc:
-                    if isinstance(node, ExpectClose):
-                        self.diagram_lines.append(f"    Server-->>Client: {expect_desc}")
-                    elif not isinstance(node, ExpectNoMessage):
-                        self.diagram_lines.append(f"    Server->>Client: {expect_desc}")
-                    self._add_extension_note(node, sender="Server")
-                node = node.child
-                continue
-
-            elif node.is_generator():
-                # This is a message generator - client sending to server
-                gen_desc = self._describe_generator(node)
-                if gen_desc:
-                    self.diagram_lines.append(f"    Client->>Server: {gen_desc}")
-                    self._add_extension_note(node, sender="Client")
-                node = node.child
-                continue
-            else:
-                # Unknown node type, skip it
-                node = node.child
-                continue
+        self.walk(node, 1)
 
         return "\n".join(self.diagram_lines)
 
