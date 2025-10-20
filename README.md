@@ -14,19 +14,18 @@ $ PYTHONPATH=.:tlsfuzzer:tlslite-ng python visualize.py <tlsfuzzer-script-path> 
 ## Example
 
 ```console
-$ python visualize.py tlsfuzzer/scripts/test-tls13-obsolete-curves.py "sanity - HRR support"
-sanity - HRR support ...
-------------------------------------------------------------
+$ python visualize.py -o out.mermaid tlsfuzzer/scripts/test-tls13-obsolete-curves.py "sanity - HRR support"
+```mermaid
 sequenceDiagram
     participant Client
     participant Server
     Note over Client: Connect to localhost:4433
     Client->>Server: ClientHello
-    Note left of Client: key_share<br/>supported_versions<br/>supported_groups<br/>signature_algorithms<br/>signature_algorithms_cert
+Note left of Client: key_share<br/>supported_versions<br/>supported_groups<br/>signature_algorithms<br/>signature_algorithms_cert
     Server->>Client: HelloRetryRequest
-    Note right of Server: key_share<br/>supported_versions
+Note right of Server: key_share<br/>supported_versions
     Client->>Server: ClientHello
-    Note left of Client: key_share<br/>supported_versions<br/>supported_groups<br/>signature_algorithms<br/>signature_algorithms_cert
+Note left of Client: key_share<br/>supported_versions<br/>supported_groups<br/>signature_algorithms<br/>signature_algorithms_cert
     Server->>Client: ChangeCipherSpec
     Server->>Client: ServerHello
     Server->>Client: EncryptedExtensions
@@ -40,12 +39,10 @@ sequenceDiagram
     end
     Server->>Client: ApplicationData
     Client->>Server: Alert(warning, close_notify)
-    Server->>Client: Alert
-------------------------------------------------------------
-OK
+    alt
+        Server-->>Client: Connection closed
+    end
 ```
-
-The rendered version is [here](https://mermaid.live/edit#pako:eNrVVMtu2zAQ_BWBpxZQ3FiSX0RhIHBS9NIc4qKHQoDBSCuJCEWyS6qJavjfQ4lyYMQRfC5P5OxwdnZJ7J5kKgdCiYE_DcgMbjkrkdWpDNzSDC3PuGbSBhvBQdpzfAv4F9Dj98pCoNxxYNNgo6SEzAZWBUJlTFTKWJokcewveNrVeu1V6AB8ByHUiaSAwgaqeFN9gnZnKobw9RG_rE2jtUIL-c5JGK6keQeXqBo9gLyUzDYIOyZKhdxW9XhglwEOFXt_zujRQm_xASy2D13njD2xi7yser_Hqi75_d-bsamYLGHDdQW41ZCN0DxwUs8Z405m2Gpn8-7FgjzpzXlK54YXPGMWLjN-AfKiHeF945KbCvKRR7gQvtFadDmc1VtmmWcJpbTffZjxHp63YLrqfvLsCYaugsxHHH6Y49yJcAV_emYouSzDIBPKwE4q14P285iw6N-UhKREnhNqsYGQ1IA1645k391Lia2ghpRQt82hYI2wKQl9yOnDjXDfxYe7v5mSVB6cpJsOv5Wqj6ru25UVoQUTxp0anbt3GYbNG4quB4Ab1UhL6DRa9CKE7skLoXEUTaJkPl_Es2W8WiZJSFpCr5JFNJnHsziZJbNlBx9C8q9PO53Ml9fTxXQ1X10vllHi1CDnVuEPP_H6wXd4Be9et6M).
 
 ## License
 
